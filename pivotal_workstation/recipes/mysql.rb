@@ -2,29 +2,31 @@
 require 'pathname'
 
 PASSWORD = node["mysql_root_password"]
-# The next two directories will be owned by WS_USER
+# The next two directories will be owned by node['current_user']
 DATA_DIR = "/usr/local/var/mysql"
 PARENT_DATA_DIR = "/usr/local/var"
 
-include_recipe "pivotal_workstation::homebrew"
+include_recipe "sprout-osx-base::homebrew"
 
-[ "/Users/#{WS_USER}/Library/LaunchAgents",
+[ "/Users/#{node['current_user']}/Library/LaunchAgents",
   PARENT_DATA_DIR,
   DATA_DIR ].each do |dir|
   directory dir do
-    owner WS_USER
+    owner node['current_user']
     action :create
   end
 end
 
-brew "mysql"
+# 2013-07-09 Install 5.6.10 because 5.6.12 doesn't work with mysql2 gem
+# https://github.com/pivotal-sprout/sprout-wrap/issues/11
+brew "https://raw.github.com/mxcl/homebrew/d28e5d5d6f1ec1cc383821750d2d6277030f06b9/Library/Formula/mysql.rb"
 
 ruby_block "copy mysql plist to ~/Library/LaunchAgents" do
   block do
     active_mysql = Pathname.new("/usr/local/bin/mysql").realpath
     plist_location = (active_mysql + "../../"+"homebrew.mxcl.mysql.plist").to_s
-    destination = "#{WS_HOME}/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
-    system("cp #{plist_location} #{destination} && chown #{WS_USER} #{destination}") || raise("Couldn't find the plist")
+    destination = "#{node['sprout']['home']}/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
+    system("cp #{plist_location} #{destination} && chown #{node['current_user']} #{destination}") || raise("Couldn't find the plist")
   end
 end
 
@@ -33,14 +35,14 @@ ruby_block "mysql_install_db" do
     active_mysql = Pathname.new("/usr/local/bin/mysql").realpath
     basedir = (active_mysql + "../../").to_s
     data_dir = "/usr/local/var/mysql"
-    system("mysql_install_db --verbose --user=#{WS_USER} --basedir=#{basedir} --datadir=#{DATA_DIR} --tmpdir=/tmp && chown #{WS_USER} #{data_dir}") || raise("Failed initializing mysqldb")
+    system("mysql_install_db --verbose --user=#{node['current_user']} --basedir=#{basedir} --datadir=#{DATA_DIR} --tmpdir=/tmp && chown #{node['current_user']} #{data_dir}") || raise("Failed initializing mysqldb")
   end
   not_if { File.exists?("/usr/local/var/mysql/mysql/user.MYD")}
 end
 
 execute "load the mysql plist into the mac daemon startup thing" do
-  command "launchctl load -w #{WS_HOME}/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
-  user WS_USER
+  command "launchctl load -w #{node['sprout']['home']}/Library/LaunchAgents/homebrew.mxcl.mysql.plist"
+  user node['current_user']
   not_if { system("launchctl list com.mysql.mysqld") }
 end
 

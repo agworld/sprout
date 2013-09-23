@@ -1,4 +1,4 @@
-include_recipe "pivotal_workstation::homebrew"
+include_recipe "sprout-osx-base::homebrew"
 include_recipe "pivotal_workstation::ssl_certificate"
 
 run_unless_marker_file_exists("nginx") do
@@ -25,7 +25,7 @@ run_unless_marker_file_exists("nginx") do
   directory launch_agents_path do
     action :create
     recursive true
-    owner WS_USER
+    owner node['current_user']
   end
 
   template plist_path do
@@ -40,5 +40,5 @@ end
 
 template "/usr/local/etc/nginx/nginx.conf" do
   source "nginx.conf.erb"
-  owner WS_USER
+  owner node['current_user']
 end

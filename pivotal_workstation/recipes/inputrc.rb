@@ -1,6 +1,6 @@
-inputrc_location = "#{WS_HOME}/.inputrc"
+inputrc_location = "#{node['sprout']['home']}/.inputrc"
 
 template inputrc_location do
-  owner WS_USER
+  owner node['current_user']
   source "inputrc.erb"
 end

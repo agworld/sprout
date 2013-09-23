@@ -1,4 +1,4 @@
-pivotal_workstation_bash_it_custom_plugin "gem_setup-warn_on_sudo.bash"
+sprout_osx_base_bash_it_custom_plugin "gem_setup-warn_on_sudo.bash"
 
 file "/etc/gemrc" do
   owner "root"
@@ -8,7 +8,7 @@ file "/etc/gemrc" do
   content "install: --no-rdoc --no-ri\nupdate: --no-rdoc --no-ri\n"
 end
 
-link "#{WS_HOME}/.gemrc" do
+link "#{node['sprout']['home']}/.gemrc" do
   to "/etc/gemrc"
-  owner WS_USER
+  owner node['current_user']
 end
