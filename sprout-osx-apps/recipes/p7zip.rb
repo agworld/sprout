@@ -1,1 +1,0 @@
-brew 'p7zip'
